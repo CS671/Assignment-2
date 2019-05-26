@@ -371,33 +371,4 @@ plot_conv_weights(designed_model, 'conv2d_1', 3, 32)
 plot_conv_weights(designed_model, 'conv2d_2', 32, 64)
 
 
-# part 3
-print("started genrating heat map")
-
-head_output = designed_model.output[0]
-last_conv_layer = designed_model.get_layer('conv2d_1')
-
-grads = K.gradients(head_output, last_conv_layer.output)[0]
-pooled_grads = K.mean(grads, axis=(0, 1, 2))
-iterate = K.function([designed_model.input], [pooled_grads, last_conv_layer.output[0]])
-pooled_grads_value, conv_layer_output_value = iterate([X_test[2000:2001]])
-
-for i in range(32):
-    conv_layer_output_value[:, :, i] *= pooled_grads_value[i]
-
-heatmap = np.mean(conv_layer_output_value, axis=-1)
-heatmap = np.maximum(heatmap, 0)
-heatmap /= np.max(heatmap)
-#     plt.savefig('heatmap.png')
-
-# Using cv2 to superimpose the heatmap on original image to clearly illustrate activated portion of image
-img = X_test[2041]
-
-
-heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
-heatmap = np.uint8(255 * heatmap)
-heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-superimposed_img = heatmap * 0.4 + img
-cv2.imwrite('image_name.jpg', superimposed_img)
-print(superimposed_img.shape)
 
